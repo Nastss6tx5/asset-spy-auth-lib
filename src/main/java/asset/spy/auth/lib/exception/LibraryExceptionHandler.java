@@ -2,6 +2,7 @@ package asset.spy.auth.lib.exception;
 
 import asset.spy.auth.lib.dto.ErrorResponseDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 @Slf4j
+@Order(1)
 public class LibraryExceptionHandler {
 
     @ExceptionHandler(InvalidJwtException.class)
@@ -39,13 +41,5 @@ public class LibraryExceptionHandler {
         log.error("Authentication exception: {}", e.getMessage(), e);
         ErrorResponseDto error = new ErrorResponseDto(e.getMessage(), "AUTHENTICATION_FAILED", HttpStatus.UNAUTHORIZED.value());
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponseDto> handleUnknownException(final Exception e) {
-        log.error("Unexpected exception: {}", e.getMessage(), e);
-        ErrorResponseDto error = new ErrorResponseDto("An unexpected error occurred", "UNKNOWN_ERROR",
-                HttpStatus.INTERNAL_SERVER_ERROR.value());
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

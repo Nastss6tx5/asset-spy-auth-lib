@@ -26,21 +26,11 @@ public class BaseJwtTokenProvider {
 
     public UUID extractExternalId(String token) {
         Claims claims = extractClaims(token);
-        String externalId = claims.get("externalId", String.class);
-        return UUID.fromString(externalId);
+        return UUID.fromString(claims.get("externalId", String.class));
     }
 
     public String extractLogin(String token) {
         return extractClaims(token).getSubject();
-    }
-
-    public Claims extractClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
     }
 
     public void validateTokenOrThrow(String token) {
@@ -56,6 +46,14 @@ public class BaseJwtTokenProvider {
         } catch (Exception e) {
             throw new InvalidJwtException("Unexpected error while validating JWT token", e);
         }
+    }
+
+    private Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     private SecretKey getSigningKey() {
