@@ -23,20 +23,27 @@ public class BaseJwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
 
-            if (jwtTokenProvider.validateTokenOrThrow(token)) {
-                String role = jwtTokenProvider.extractRole(token);
-                UUID externalId = jwtTokenProvider.extractExternalId(token);
-                request.setAttribute("externalId", externalId);
+            jwtTokenProvider.validateTokenOrThrow(token);
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(externalId,
-                        null, List.of(new SimpleGrantedAuthority(role)));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            String role = jwtTokenProvider.extractRole(token);
+            String login = jwtTokenProvider.extractLogin(token);
+            UUID externalId = jwtTokenProvider.extractExternalId(token);
+            request.setAttribute("externalId", externalId);
+            request.setAttribute("login", login);
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(login,
+                    null, List.of(new SimpleGrantedAuthority(role)));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);
     }

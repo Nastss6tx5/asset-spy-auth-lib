@@ -20,11 +20,6 @@ public class BaseJwtTokenProvider {
     @Value("${security.jwt.secret}")
     private String secret;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
-    }
-
-
     public String extractRole(String token) {
         return extractClaims(token).get("role", String.class);
     }
@@ -35,27 +30,25 @@ public class BaseJwtTokenProvider {
         return UUID.fromString(externalId);
     }
 
-    public Claims extractClaims(String token) {
-        try {
-            return Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (ExpiredJwtException e) {
-            throw new TokenExpiredException("Expired JWT token", e);
-        } catch (Exception e) {
-            throw new InvalidJwtException("Invalid JWT token", e);
-        }
+    public String extractLogin(String token) {
+        return extractClaims(token).getSubject();
     }
 
-    public boolean validateTokenOrThrow(String token) {
+    public Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+    }
+
+    public void validateTokenOrThrow(String token) {
         try {
             Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token);
-            return true;
         } catch (ExpiredJwtException e) {
             throw new TokenExpiredException("Expired or invalid JWT token", e);
         } catch (UnsupportedJwtException | MalformedJwtException | SignatureException e) {
@@ -63,5 +56,9 @@ public class BaseJwtTokenProvider {
         } catch (Exception e) {
             throw new InvalidJwtException("Unexpected error while validating JWT token", e);
         }
+    }
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes());
     }
 }
